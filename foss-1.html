@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vue.js Image Gallery</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f2f5; /* Light gray background for better contrast */
+    }
+    h1 {
+      text-align: center;
+      margin: 20px 0;
+      color: #333;
+    }
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .upload {
+      display: flex;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    .upload input {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Adjusted minimum size for better visual balance */
+      gap: 15px; /* Increased gap for better spacing */
+      background-color: #fff; /* White background for the gallery */
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Shadow for subtle elevation */
+    }
+    .gallery img {
+      width: 100%;
+      height: 200px; /* Increased height for better image display */
+      object-fit: cover;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .gallery img:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Enhanced shadow on hover */
+    }
+    .lightbox {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+    .lightbox.visible {
+      visibility: visible;
+      opacity: 1;
+    }
+    .lightbox img {
+      max-width: 90%;
+      max-height: 80%;
+      border-radius: 8px;
+    }
+    .lightbox .nav {
+      position: absolute;
+      top: 50%;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      transform: translateY(-50%);
+    }
+    .lightbox .nav button {
+      background: rgba(255, 255, 255, 0.7);
+      border: none;
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: background 0.3s, transform 0.3s;
+    }
+    .lightbox .nav button:hover {
+      background: rgba(255, 255, 255, 1);
+      transform: scale(1.2);
+    }
+    .thumbnail-nav {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .thumbnail-nav img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 5px;
+      cursor: pointer;
+      border: 2px solid #ddd;
+      transition: transform 0.3s, border-color 0.3s;
+    }
+    .thumbnail-nav img:hover {
+      transform: scale(1.1);
+    }
+    .thumbnail-nav img.active {
+      border-color: #333;
+    }
+    .metadata {
+      color: #fff;
+      text-align: center;
+      margin-top: 15px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 8px;
+    }
+    .metadata div {
+      margin-bottom: 5px;
+    }
+    .loading-spinner {
+      border: 8px solid #f3f3f3;
+      border-top: 8px solid #333;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .loading-percentage {
+      font-size: 18px;
+      color: #333;
+      text-align: center;
+      margin-top: 10px;
+    }
+    .error, .success {
+      text-align: center;
+      margin: 20px;
+    }
+    .error {
+      color: red;
+    }
+    .success {
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="container">
+    <h1>Vue.js Image Gallery</h1>
+
+    <div class="upload">
+      <input type="file" @change="uploadImage" accept="image/*" />
+    </div>
+
+    <div v-if="loading">
+      <div class="loading-spinner"></div>
+      <div class="loading-percentage">{{ loadingPercentage }}%</div>
+    </div>
+    <div v-if="error" class="error">{{ error }}</div>
+    <div v-if="success" class="success">{{ success }}</div>
+
+    <div v-if="images.length" class="gallery">
+      <img
+        v-for="(image, index) in images"
+        :key="index"
+        :src="image.url"
+        @click="openLightbox(index)"
+        alt="Gallery Image"
+      >
+    </div>
+
+    <div :class="['lightbox', { 'visible': showLightbox }]" @click="closeLightbox">
+      <img :src="currentImage.url" alt="Lightbox Image" @click.stop>
+      <div class="nav">
+        <button @click.stop="prevImage">‹</button>
+        <button @click.stop="nextImage">›</button>
+      </div>
+      <div class="thumbnail-nav">
+        <img
+          v-for="(image, index) in images"
+          :key="index"
+          :src="image.url"
+          :class="{ 'active': index === currentImageIndex }"
+          @click.stop="openLightbox(index)"
+          alt="Thumbnail Image"
+        >
+      </div>
+      <div class="metadata">
+        <div><strong>Title:</strong> {{ currentImage.metadata.title }}</div>
+        <div><strong>Description:</strong> {{ currentImage.metadata.description }}</div>
+        <div><strong>Date:</strong> {{ currentImage.metadata.date }}</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    new Vue({
+      el: '#app',
+      data() {
+        return {
+          images: [],
+          loading: false, // Set to false as images are not loaded by default
+          error: null,
+          success: null,
+          showLightbox: false,
+          currentImageIndex: 0,
+          loadingPercentage: 0
+        };
+      },
+      mounted() {
+        window.addEventListener('keydown', this.handleKeydown);
+      },
+      beforeDestroy() {
+        window.removeEventListener('keydown', this.handleKeydown);
+      },
+      methods: {
+        uploadImage(event) {
+          const file = event.target.files[0];
+          if (!file) return;
+         
+          if (!file.type.startsWith('image/')) {
+            this.error = 'Please upload a valid image file.';
+            return;
+          }
+         
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const imageUrl = e.target.result;
+            this.images.push({
+              url: imageUrl,
+              metadata: {
+                title: file.name,
+                description: 'Uploaded image',
+                date: new Date().toISOString().split('T')[0]
+              }
+            });
+            this.success = 'Image uploaded successfully.';
+          };
+          reader.readAsDataURL(file);
+        },
+        openLightbox(index) {
+          this.currentImageIndex = index;
+          this.showLightbox = true;
+        },
+        closeLightbox() {
+          this.showLightbox = false;
+        },
+        prevImage() {
+          this.currentImageIndex = (this.currentImageIndex - 1 + this.images.length) % this.images.length;
+        },
+        nextImage() {
+          this.currentImageIndex = (this.currentImageIndex + 1) % this.images.length;
+        },
+        handleKeydown(event) {
+          if (this.showLightbox) {
+            if (event.key === 'ArrowLeft') {
+              this.prevImage();
+            } else if (event.key === 'ArrowRight') {
+              this.nextImage();
+            } else if (event.key === 'Escape') {
+              this.closeLightbox();
+            }
+          }
+        }
+      },
+      computed: {
+        currentImage() {
+          return this.images[this.currentImageIndex] || { metadata: {} };
+        }
+      }
+    });
+  </script>
+</body>
+</html>
