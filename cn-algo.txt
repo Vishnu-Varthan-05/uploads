@@ -1,0 +1,44 @@
+1. Distance Vector Routing Algorithm
+Steps:
+Initialization: Each router initializes its distance table with infinite distance to all nodes except itself (distance = 0).
+Exchange Information: Routers send their distance tables to all directly connected neighbors.
+Update Table: Each router updates its table using the Bellman-Ford algorithm, considering distances received from neighbors.
+Loop: Repeat the update process until no further changes are made in any table (convergence).
+Convergence Check: Ensure that all distance vectors are stable and no router has updated its distance.
+Route Selection: The router chooses the path with the minimum cost to each destination from its table.
+Forward Data: After convergence, routers forward data based on the updated table.
+
+
+2. Link State Routing Algorithm
+
+Steps:
+Initialization: Each router initializes its Link State Database (LSDB) with information about its immediate links.
+Flood LSAs: Routers send Link State Advertisements (LSAs) to all other routers in the network.
+LSA Processing: Each router receives LSAs, updates its LSDB, and recomputes its routing table using Dijkstra's algorithm.
+Convergence: Repeat LSAs exchange and table updates until the network stabilizes (no new changes).
+Dijkstra’s Algorithm: Use the LSDB to compute the shortest path tree to all destinations.
+Route Selection: The router selects the best path (minimum cost) for routing based on the updated routing table.
+Forward Data: Routers forward data packets based on their updated routing table.
+
+
+3. Real-Time Chat Application using TCP
+Steps:
+Server Initialization: Create a TCP server socket that listens for incoming connections.
+Client Connection: Establish a TCP connection between the client and the server.
+Data Transmission: The client and server send and receive messages, ensuring delivery using TCP's reliable ordering.
+Message Handling: Both server and client handle incoming messages and display them to users.
+Acknowledgement: After receiving each message, the receiver sends an acknowledgment to ensure reliability.
+Close Connection: Once the chat ends, the client and server send a FIN message to close the TCP connection.
+Graceful Shutdown: The server and client close their sockets and release resources.
+
+
+4. Real-Time Chat Application using UDP
+
+Steps:
+Server Initialization: Create a UDP server socket to listen for incoming messages from clients.
+Client Connection: The client sends a message to the server using its IP and port (no formal connection).
+Data Transmission: Client and server exchange messages over UDP without guaranteeing delivery or order.
+Message Handling: Both server and client handle incoming messages and display them to users.
+Non-reliable Communication: Since UDP is connectionless, there is no acknowledgment or error checking.
+No Connection Close: UDP does not require closing a connection as each message is sent independently.
+Graceful Shutdown: Once the chat ends, both client and server release the resources.
