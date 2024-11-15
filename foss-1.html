@@ -209,7 +209,7 @@
         <div><strong>Date:</strong> {{ currentImage.metadata.date }}</div>
       </div>
     </div>
-  </div>
+  </div>                                            
 
   <script>
     new Vue({
@@ -217,7 +217,7 @@
       data() {
         return {
           images: [],
-          loading: false, // Set to false as images are not loaded by default
+          loading: false,
           error: null,
           success: null,
           showLightbox: false,
