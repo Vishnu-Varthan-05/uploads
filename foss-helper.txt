@@ -1,0 +1,8 @@
+systemctl --user stop graphql-backend
+systemctl --user stop react-frontend
+systemctl --user disable graphql-backend
+systemctl --user disable react-frontend
+rm ~/.config/systemd/user/graphql-backend.service
+rm ~/.config/systemd/user/react-frontend.service
+systemctl --user daemon-reload
+
